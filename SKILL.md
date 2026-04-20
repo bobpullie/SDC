@@ -12,6 +12,74 @@ description: Subagent Delegation Contract — 위상군(Opus 4.7)이 TEMS 모듈
 
 **모델 배치 원칙**: 판단·추론·Audit 서브에이전트는 **Opus 4.7**, 실행·구현·테스트·탐색 서브에이전트는 **Sonnet 4.6**. code-reviewer / advisor 는 예외 없이 Opus 전담. 혼용 금지.
 
+## 0. Auto-Dispatch Check (task 수신 즉시 실행 — Hybrid Trigger 모드)
+
+새 task 수신 시 아래 절차를 **자동 실행**. Trigger 키워드 매칭 시에만 명시적 판정, 그 외에는 판정 생략 (Opus 본체 직접 처리, 내재화된 기본).
+
+### Auto-Trigger 키워드
+
+아래 패턴이 task에 포함되면 3-question gate 자동 실행:
+
+- Git 명령: `commit` · `push` · `pull` · `merge` · `rebase` · `cherry-pick` · `fetch`
+- 파일 조작: `mv` · `cp` · `rename` · `refactor` · `migrate`
+- 배치: 동일 연산 ≥3회 반복 / "대량 / N개 모두 / 반복"
+- 분류: `classify` · `sort` · `재분류` · `needs_review` · `7-카테고리`
+- 검증: `verify` · `test` · `validate` · `smoke`
+- 이식/배포: `Wave` · `이식` · `배포` · `port`
+
+Trigger 없으면 → 게이트 생략, 본체 직접 판단 (일반 대화·설계 질문 등).
+
+### 3-Question Gate
+
+**Q1. Invariance Test** — "동일 spec·tools를 받은 5명의 구현자가 strictly 따른다면, 결과물이 의미적으로 동등한가?"
+- NO (결과 편차 생김) → **KEEP Opus**
+- YES → Q2
+
+**Q2. Overhead Test** — "SDC brief 작성 + Sonnet warmup이 직접 실행보다 더 많은 tool call / 토큰을 요구하는가? (task 실행량 < ~2k Sonnet tokens 또는 1~2 step)"
+- YES → **KEEP direct** (본체 즉시 처리, overhead 회피)
+- NO → Q3
+
+**Q3. Reversibility Gate** — 출력이 틀렸을 때 blast radius?
+- Local & reversible (file edit, 로컬 test) → **DELEGATE (full)** — Sonnet 실행·보고
+- Shared state (push / PR / 외부 API) → **DELEGATE + STAGING** — TCL #86: Sonnet은 `git add`까지만, commit/push는 Opus가 검토 후 실행
+- Destructive (`rm -rf` / `DROP TABLE` / force-push to main) → **KEEP Opus + 사용자 명시 승인**
+
+### Signal Heuristics (빠른 판정 보조)
+
+| Signal | 방향 |
+|--------|------|
+| "이식 / 복사 / rename / migrate / 배포" | → DELEGATE |
+| "대량 / N개 모두 / 반복" | → DELEGATE |
+| "smoke test / 실증 / 확인 / readonly 탐색" | → DELEGATE |
+| "아키텍처 / 설계 / 판정 / 근거 서술" | → KEEP |
+| "best approach / trade-off / should we" | → KEEP |
+| TEMS fallback 근거 / Phase 전환 / 신규 분류 축 | → KEEP |
+| 동일 파일 2+ 편집 + 테스트 | → DELEGATE |
+| 오타 1~2줄 수정 | → KEEP direct |
+
+### 판정 결과 처리
+
+| 판정 | 처리 |
+|------|------|
+| **DELEGATE** | 필수 5항목 brief 작성 → `Agent(subagent_type="general-purpose", model="sonnet", prompt=brief)` 호출 → 결과 trust-but-verify (TCL #115) |
+| **STAGING** | brief 작성 + 제약 추가: "`git add`까지만 실행, commit/push 금지 (TCL #86)" → Sonnet 결과 검토 → Opus가 최종 commit/push |
+| **KEEP** | 본체 직접 실행. 내재화된 판단, verbalize 생략 가능. KEEP 근거 1줄 노트 권장 (예: "Q2 KEEP: 1줄 편집") |
+
+### 기본값 (Default Reversal)
+
+- **Q1 PASS + Q2 PASS + Q3 Local** → **자동 DELEGATE** (매번 "위임할까?" 묻지 말 것)
+- **KEEP 판정은 근거 1줄 명시** (Q1 fail 이유 or Q2 overhead 압도)
+- Trigger 없는 일반 대화/판단 요청은 게이트 자체를 생략
+
+### 비용 고려 (세션 효율)
+
+- 게이트 overhead (trigger-only): 세션당 ~$0.04-$0.45 (Opus 토큰)
+- Delegation 고정비: ~$0.12/회 (brief + subagent warmup + verify)
+- Break-even: task 실행량 ≥ ~2000 Sonnet tokens 시 delegation 순이득
+- 예상 순이익: 세션당 토큰 $0.5-$1.5 절감 + context window 보존 (auto-compact 회피)
+
+참조: TCL #86 (subagent commit 권한 통제) · TCL #115 (trust-but-verify) · TCL #117 (분류 작업 Sonnet 위임) · TCL #120 (이 dispatch policy)
+
 ## 위임 매트릭스
 
 | 작업 유형 | 도메인 규칙/스킬 | Agent type | 모델 |
