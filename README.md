@@ -24,18 +24,33 @@
 
 ## Install (프로젝트 로컬 스킬)
 
+**Option A — 단일 파일 download (경량):**
+
 ```bash
 cd <AGENT_PROJECT_ROOT>
 mkdir -p .claude/skills
 curl -o .claude/skills/SDC.md https://raw.githubusercontent.com/bobpullie/SDC/main/SKILL.md
 ```
 
-또는 clone:
+**Option B — 서브모듈/clone (pull-based 업데이트):**
 
 ```bash
-git clone https://github.com/bobpullie/SDC.git /tmp/SDC
-cp /tmp/SDC/SKILL.md <AGENT_PROJECT_ROOT>/.claude/skills/SDC.md
+cd <AGENT_PROJECT_ROOT>
+git clone https://github.com/bobpullie/SDC.git .claude/skills/SDC
+# SKILL.md 경로: .claude/skills/SDC/SKILL.md
 ```
+
+## Updating
+
+```bash
+# Option A (single file)
+curl -o <AGENT_PROJECT_ROOT>/.claude/skills/SDC.md https://raw.githubusercontent.com/bobpullie/SDC/main/SKILL.md
+
+# Option B (clone)
+git -C <AGENT_PROJECT_ROOT>/.claude/skills/SDC pull origin main
+```
+
+위상군/리얼군/타 에이전트 누구든 upstream에 기여 → 전체 에이전트가 업데이트 수신.
 
 ## 에이전트별 커스터마이제이션
 

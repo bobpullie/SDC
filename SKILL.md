@@ -1,5 +1,7 @@
 ---
 name: SDC
+upstream: https://github.com/bobpullie/SDC
+update_cmd: curl -o <INSTALL_PATH>/SDC.md https://raw.githubusercontent.com/bobpullie/SDC/main/SKILL.md
 description: Subagent Delegation Contract — 위상군(Opus 4.7)이 TEMS 모듈 구현/이식/재분류/탐색/smoke-test 등 실행 작업을 Sonnet 서브에이전트에 위임할 때의 계약(brief 5항목 + verification + 분업 매트릭스) 작성법과 작업 유형별 템플릿
 ---
 
