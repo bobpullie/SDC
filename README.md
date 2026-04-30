@@ -2,6 +2,21 @@
 
 **Claude Code Skill Plugin** — Opus 4.7 본체가 Sonnet 서브에이전트에 실행 작업을 위임할 때 교환하는 **계약**. Design by Contract(Hoare logic) 구조적 동형.
 
+---
+
+## 5-Asset 4 원칙 (Independence + Local-Only + Separate-Repo + Universal Portability)
+
+본 자산은 Triad Chord Studio 5-Asset 체계 (**TEMS / SDC / DVC / TWK / handover**) 의 한 축. 다음 4 게이트 원칙을 모두 만족해야 canonical GitHub 레포에 push 허용:
+
+1. **Independence** — 5자산 상호 의존 0. SDC 는 TEMS / DVC / TWK / handover 미설치 환경에서도 self-contained 작동 (위임 계약 자체로 완결).
+2. **Local-Only** — SDC.md skill 파일은 각 에이전트 `.claude/skills/` 또는 `~/.claude/skills/` 로컬 한정. hub 디렉토리 금지.
+3. **Separate-Repo** — 각 자산 별도 canonical 레포 보유. 한 PR 에 두 레포 묶지 않음.
+4. **Universal Portability** — Windows/Linux/macOS, 임의 OS user, 임의 에이전트명 작동. 절대경로/특정 user-name/hub 의존 금지 — `migration_orphan_check` 절은 위임 brief 6번째 항목으로 잔존 caller 검출 강제.
+
+위반 발견 시 즉시 일반화 PR.
+
+---
+
 ## 왜 SDC가 필요한가
 
 "맥락 추측하지 마라, 계약서에 명시된 것만 수행하라" — 서브에이전트 실패 모드의 근본 원인은 **모호한 프롬프트**. SDC는 이를 5-slot 구조로 강제한다.
